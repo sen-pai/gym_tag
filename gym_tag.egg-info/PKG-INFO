@@ -1,0 +1,10 @@
+Metadata-Version: 1.2
+Name: gym-tag
+Version: 0.0.1
+Summary: Predator - Prey environment from pygame
+Home-page: https://github.com/sen-pai/gym_tag
+Author: Sharan Pai
+License: UNKNOWN
+Description: UNKNOWN
+Platform: UNKNOWN
+Requires-Python: >=3.6
