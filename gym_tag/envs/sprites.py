@@ -42,25 +42,44 @@ class Player(pg.sprite.Sprite):
         self.pos = vec(x, y) * TILESIZE
         self.rot = 0
 
-    def get_keys(self,):
+    def get_action_input(self, action=0):
 
-        # set vx and vy = 0 if no key is pressed
-        self.vel = vec(0, 0)
-        self.rot_speed = 0
-
-        keys = pg.key.get_pressed()
-        if keys[pg.K_LEFT]:
+        if action == 0:
+            # do nothing
+            # set vx and vy = 0 if no key is pressed
+            self.vel = vec(0, 0)
+            self.rot_speed = 0
+        elif action == 1:
+            # forward and turn left
             self.rot_speed = PLAYER_SPEED
-        # change elif to if to move diagonally
-        if keys[pg.K_RIGHT]:
-            self.rot_speed = -PLAYER_SPEED
-        if keys[pg.K_UP]:
             self.vel = vec(PLAYER_SPEED, 0).rotate(-self.rot)
-        # if keys[pg.K_DOWN]:
-        #     self.vel = vec(-PLAYER_SPEED / 2, 0).rotate(-self.rot)
+        elif action == 2:
+            # foward and turn right
+            self.rot_speed = -PLAYER_SPEED
+            self.vel = vec(PLAYER_SPEED, 0).rotate(-self.rot)
+        elif action == 3:
+            # only forward
+            self.vel = vec(PLAYER_SPEED, 0).rotate(-self.rot)
+
+    # def get_keys(self,):
+    #
+    #     # set vx and vy = 0 if no key is pressed
+    #     self.vel = vec(0, 0)
+    #     self.rot_speed = 0
+    #
+    #     keys = pg.key.get_pressed()
+    #     if keys[pg.K_LEFT]:
+    #         self.rot_speed = PLAYER_SPEED
+    #     # change elif to if to move diagonally
+    #     if keys[pg.K_RIGHT]:
+    #         self.rot_speed = -PLAYER_SPEED
+    #     if keys[pg.K_UP]:
+    #         self.vel = vec(PLAYER_SPEED, 0).rotate(-self.rot)
+    #     # if keys[pg.K_DOWN]:
+    #     #     self.vel = vec(-PLAYER_SPEED / 2, 0).rotate(-self.rot)
 
     def update(self):
-        self.get_keys()
+        # self.get_action_input()
         self.rot = (self.rot + self.rot_speed * self.game.dt) % 360
         self.image = pg.transform.rotate(self.game.player_image, self.rot)
         self.rect = self.image.get_rect()
