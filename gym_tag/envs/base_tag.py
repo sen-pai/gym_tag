@@ -20,14 +20,15 @@ Things you can change
 "env_type": 3 options ["goal", "empty", "mob"] this influences your reward function
 "reward type": 2 options ["survival", "distance"]
 """
-base_config = {"map": "empty_map.txt",
-"env_type": "empty",
-"reward_type": "survival",
+base_config = {
+    "map": "empty_map.txt",
+    "env_type": "empty",
+    "reward_type": "survival",
 }
 
-class EmptyEnv(gym.Env):
 
-    def __init__(self, config = base_config):
+class EmptyEnv(gym.Env):
+    def __init__(self, config=base_config):
         os.environ["SDL_VIDEODRIVER"] = "dummy"
         pg.init()
         pg.display.init()
@@ -37,7 +38,7 @@ class EmptyEnv(gym.Env):
 
         self.config = config
 
-        #max timesteps for the mob version
+        # max timesteps for the mob version
         self.steps = 0
         self.mob_max_steps = 1000
         self.action_space = spaces.Discrete(4)
@@ -64,7 +65,6 @@ class EmptyEnv(gym.Env):
         with open(path.join(self.maps_folder, self.config["map"]), "rt") as f:
             for line in f:
                 self.map_data.append(line)
-
 
         # load player image
         self.player_image = pg.image.load(
@@ -128,7 +128,7 @@ class EmptyEnv(gym.Env):
         pg.display.flip()
 
     def _get_obs(self):
-        return pg.surfarray.array3d(self.screen).swapaxes(0, 1)
+        return np.array(pg.surfarray.array3d(self.screen).swapaxes(0, 1))
 
     def _reward_func(self):
         self.goal_reached_reward = 10
@@ -137,14 +137,16 @@ class EmptyEnv(gym.Env):
         if self.config["env_type"] == "goal":
             assert self.config["map"].startswith("goal"), "need a goal map, change map or env_type"
 
-            #return distance between player and goal
-            dist = round(-math.hypot(self.goal.x - self.player.pos.x, self.goal.y - self.player.pos.y), 2)
+            # return distance between player and goal
+            dist = round(
+                -math.hypot(self.goal.x - self.player.pos.x, self.goal.y - self.player.pos.y), 2
+            )
             if self.config["reward_type"] == "distance":
-                #if goal hit return 10
+                # if goal hit return 10
                 if dist == 0:
                     return self.goal_reached_reward
                 return dist
-            elif self.config["reward_type"] == "survival" :
+            elif self.config["reward_type"] == "survival":
                 if dist == 0:
                     return 10
                 return -0.1
@@ -152,7 +154,7 @@ class EmptyEnv(gym.Env):
         if self.config["env_type"] == "mob":
             assert self.config["map"].startswith("mob"), "need a mob map, change map or env_type"
 
-            #fixed reward type for mob
+            # fixed reward type for mob
             # +0.1 every timestep
             # -1 if hit by mob
 
@@ -160,8 +162,6 @@ class EmptyEnv(gym.Env):
             if hits:
                 return self.mob_hit_punishment
             return 0.1
-
-
 
     def _check_done(self):
         if self.config["env_type"] == "goal":
@@ -201,3 +201,7 @@ class EmptyEnv(gym.Env):
 
     def close(self):
         pg.quit()
+
+    def seed(self, seed):
+        # no randomness in the env, but keeping the method to avoid future errors
+        pass
