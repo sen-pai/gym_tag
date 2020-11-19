@@ -4,11 +4,10 @@ import gym
 from gym import spaces, error
 
 import numpy as np
-import matplotlib.pyplot as plt
-import math, random
+import math
 import os
 from os import path
-import sys
+
 from .settings import *
 from .sprites import *
 
@@ -19,11 +18,11 @@ I pass a dictionary that hass all the tweaks you can do to the environment
 Things you can change
 "map": Check maps folder, create your own map if you want
 "env_type": 3 options ["goal", "empty", "mob"] this influences your reward function
-"reward type": 2 options ["dense", "sparce"]
+"reward type": 2 options ["survival", "distance"]
 """
 base_config = {"map": "empty_map.txt",
 "env_type": "empty",
-"reward_type": "dense",
+"reward_type": "survival",
 }
 
 class EmptyEnv(gym.Env):
@@ -37,7 +36,10 @@ class EmptyEnv(gym.Env):
         self.clock = pg.time.Clock()
 
         self.config = config
-        print(self.config["map"])
+
+        #max timesteps for the mob version
+        self.steps = 0
+        self.mob_max_steps = 1000
         self.action_space = spaces.Discrete(4)
         self.observation_space = spaces.Box(low=0.0, high=256.0, shape=(384, 384, 3))
         self.load_data()
@@ -45,7 +47,7 @@ class EmptyEnv(gym.Env):
 
     def set_config(self, new_config):
         """
-        if you have a new config call it right after gym.make
+        if you have a new config call it right after gym.make()
         """
         self.config = new_config
         self.load_data()
@@ -103,8 +105,8 @@ class EmptyEnv(gym.Env):
                     self.player = Player(self, col, row)
                 if tile == "M":
                     self.mob = Mob(self, col, row)
-                # if tile == "G":
-                #     self.mob = Goal(self, col, row)
+                if tile == "G":
+                    self.goal = Goal(self, col, row)
 
         self.dt = self.clock.tick(FPS) / 1000
         self.player.get_action_input()
@@ -121,7 +123,7 @@ class EmptyEnv(gym.Env):
 
     def draw(self):
         self.screen.fill(BGCOLOR)
-        self.draw_grid()
+        # self.draw_grid()
         self.all_sprites.draw(self.screen)
         pg.display.flip()
 
@@ -129,10 +131,51 @@ class EmptyEnv(gym.Env):
         return pg.surfarray.array3d(self.screen).swapaxes(0, 1)
 
     def _reward_func(self):
-        pass
+        self.goal_reached_reward = 10
+        self.mob_hit_punishment = -1
+
+        if self.config["env_type"] == "goal":
+            assert self.config["map"].startswith("goal"), "need a goal map, change map or env_type"
+
+            #return distance between player and goal
+            dist = round(-math.hypot(self.goal.x - self.player.pos.x, self.goal.y - self.player.pos.y), 2)
+            if self.config["reward_type"] == "distance":
+                #if goal hit return 10
+                if dist == 0:
+                    return self.goal_reached_reward
+                return dist
+            elif self.config["reward_type"] == "survival" :
+                if dist == 0:
+                    return 10
+                return -0.1
+
+        if self.config["env_type"] == "mob":
+            assert self.config["map"].startswith("mob"), "need a mob map, change map or env_type"
+
+            #fixed reward type for mob
+            # +0.1 every timestep
+            # -1 if hit by mob
+
+            hits = pg.sprite.spritecollide(self.player, self.mobs, False, collide_with_rects)
+            if hits:
+                return self.mob_hit_punishment
+            return 0.1
+
+
 
     def _check_done(self):
-        pass
+        if self.config["env_type"] == "goal":
+            if self._reward_func() == self.goal_reached_reward:
+                return True
+            return False
+
+        if self.config["env_type"] == "mob":
+            if self.mob_max_steps == self.steps:
+                return True
+            return False
+
+        if self.config["env_type"] == "empty":
+            return False
 
     def step(self, action):
         """4 actions
@@ -146,19 +189,15 @@ class EmptyEnv(gym.Env):
         self.draw()
 
         obs = self._get_obs()
-        reward = -1
-        done = False
+        reward = self._reward_func()
+        done = self._check_done()
         info = {}
 
+        self.steps += 1
         return obs, reward, done, info
 
     def render(self, mode="human", close=False):
         pass
 
-    def save_obs(self, save_name):
-        obs = self._get_obs()
-        plt.imsave(save_name, obs)
-
     def close(self):
         pg.quit()
-        sys.exit()

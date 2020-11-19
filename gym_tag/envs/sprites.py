@@ -52,34 +52,16 @@ class Player(pg.sprite.Sprite):
         elif action == 1:
             # forward and turn left
             self.rot_speed = PLAYER_SPEED
-            self.vel = vec(PLAYER_SPEED, 0).rotate(-self.rot)
+            self.vel = vec(PLAYER_SPEED * 0.9, 0).rotate(-self.rot)
         elif action == 2:
             # foward and turn right
             self.rot_speed = -PLAYER_SPEED
-            self.vel = vec(PLAYER_SPEED, 0).rotate(-self.rot)
+            self.vel = vec(PLAYER_SPEED * 0.9, 0).rotate(-self.rot)
         elif action == 3:
             # only forward
-            self.vel = vec(PLAYER_SPEED, 0).rotate(-self.rot)
-
-    # def get_keys(self,):
-    #
-    #     # set vx and vy = 0 if no key is pressed
-    #     self.vel = vec(0, 0)
-    #     self.rot_speed = 0
-    #
-    #     keys = pg.key.get_pressed()
-    #     if keys[pg.K_LEFT]:
-    #         self.rot_speed = PLAYER_SPEED
-    #     # change elif to if to move diagonally
-    #     if keys[pg.K_RIGHT]:
-    #         self.rot_speed = -PLAYER_SPEED
-    #     if keys[pg.K_UP]:
-    #         self.vel = vec(PLAYER_SPEED, 0).rotate(-self.rot)
-    #     # if keys[pg.K_DOWN]:
-    #     #     self.vel = vec(-PLAYER_SPEED / 2, 0).rotate(-self.rot)
+            self.vel = vec(PLAYER_SPEED * 0.9, 0).rotate(-self.rot)
 
     def update(self):
-        # self.get_action_input()
         self.rot = (self.rot + self.rot_speed * self.game.dt) % 360
         self.image = pg.transform.rotate(self.game.player_image, self.rot)
         self.rect = self.image.get_rect()
@@ -87,8 +69,11 @@ class Player(pg.sprite.Sprite):
         self.pos += self.vel * self.game.dt
         self.hit_rect.centerx = self.pos.x
         collide_with_walls(self, self.game.walls, "x")
+        collide_with_walls(self, self.game.goals, "x")
+
         self.hit_rect.centery = self.pos.y
         collide_with_walls(self, self.game.walls, "y")
+        collide_with_walls(self, self.game.goals, "y")
         self.rect.center = self.hit_rect.center
 
 
@@ -107,12 +92,21 @@ class Mob(pg.sprite.Sprite):
         self.vel = vec(0, 0)
         self.acc = vec(0, 0)
 
+    def avoid_mobs(self):
+        for mob in self.game.mobs:
+            if mob != self:
+                dist = self.pos - mob.pos
+                if 0 < dist.length() < MOB_AVOID_RADIUS:
+                    self.acc += dist.normalize()
+
     def update(self):
         self.rot = (self.game.player.pos - self.pos).angle_to(vec(1, 0))
         self.image = pg.transform.rotate(self.game.mob_image, self.rot)
         self.rect = self.image.get_rect()
         self.rect.center = self.pos
-        self.acc = vec(MOB_SPEED, 0).rotate(-self.rot)
+        self.acc = vec(1, 0).rotate(-self.rot)
+        self.avoid_mobs()
+        self.acc.scale_to_length(MOB_SPEED)
         self.acc += self.vel * -1
         self.vel += self.acc * self.game.dt
         self.pos += self.vel * self.game.dt + 0.5 * self.acc * self.game.dt ** 2
