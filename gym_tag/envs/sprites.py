@@ -61,8 +61,30 @@ class Player(pg.sprite.Sprite):
             # only forward
             self.vel = vec(PLAYER_SPEED * 0.9, 0).rotate(-self.rot)
 
+    def get_action_input_type_2(self, action=0):
+
+        # left is just turning 45 degree left and same with right
+        if action == 0:
+            # do nothing
+            # set vx and vy = 0 if no key is pressed
+            self.vel = vec(0, 0)
+            self.rot_speed = 0
+        elif action == 1:
+            # turn left
+            self.vel = vec(0, 0)
+            self.rot_speed = PLAYER_SPEED * 2
+        elif action == 2:
+            # turn right
+            self.vel = vec(0, 0)
+            self.rot_speed = -PLAYER_SPEED * 2
+        elif action == 3:
+            # only forward
+            self.rot_speed = 0
+            self.vel = vec(PLAYER_SPEED, 0).rotate(-self.rot)
+
     def update(self):
-        self.rot = (self.rot + self.rot_speed * self.game.dt) % 360
+        if self.rot_speed != 0:
+            self.rot = (self.rot + self.rot_speed * self.game.dt) % 360
         self.image = pg.transform.rotate(self.game.player_image, self.rot)
         self.rect = self.image.get_rect()
         self.rect.center = self.pos
