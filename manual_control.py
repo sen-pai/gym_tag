@@ -8,7 +8,7 @@ action_name = ["do_nothing", "left_forward", "right_forward", "forward"]
 
 # my_config = {"map": "goal_map.txt", "env_type": "goal", "reward_type": "distance", "action type": "type2"}
 
-my_config = {"map": "goal_easiest_map.txt", "env_type": "goal", "reward_type": "distance", "action type": "type2"}
+my_config = {"map": "mob_2_map.txt", "env_type": "mob", "reward_type": "distance", "action type": "type2"}
 
 
 def manual_control():
